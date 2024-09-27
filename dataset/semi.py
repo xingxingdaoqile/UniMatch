@@ -36,7 +36,9 @@ class SemiDataset(Dataset):
             os.path.join('/kaggle/input/cityscapes/leftImg8bit_trainvaltest', id.split(' ')[0])).convert(
             'RGB')
 
-        mask = Image.fromarray(np.array(Image.open(os.path.join(self.root, id.split(' ')[1]))))
+        #mask = Image.fromarray(np.array(Image.open(os.path.join(self.root, id.split(' ')[1]))))
+        mask = Image.fromarray(
+            np.array(Image.open(os.path.join('/kaggle/input/cityscapes/gtFine_trainvaltest', id.split(' ')[1]))))
 
         if self.mode == 'val':
             img, mask = normalize(img, mask)

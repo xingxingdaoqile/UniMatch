@@ -5,6 +5,7 @@ import math
 import numpy as np
 import os
 import random
+import time
 
 from PIL import Image
 import torch
@@ -34,8 +35,18 @@ class SemiDataset(Dataset):
         #img = Image.open(os.path.join(self.root, id.split(' ')[0])).convert('RGB')
         img = Image.open(os.path.join('/kaggle/input/cityscapes/leftImg8bit_trainvaltest', id.split(' ')[0])).convert('RGB')
 
+        retries = 3  # 设置重试次数
+        for _ in range(retries):
+            try:
+                mask_path = os.path.join('/kaggle/input/cityscapes/gtFine_trainvaltest', id.split(' ')[1])
+                mask = Image.open(mask_path)
+                return mask
+            except FileNotFoundError:
+                print(f"File {mask_path} not found, retrying...")
+                time.sleep(0.5)  # 等待 0.5 秒后重试
+        raise FileNotFoundError(f"File {mask_path} not found after {retries} retries")
         #mask = Image.fromarray(np.array(Image.open(os.path.join(self.root, id.split(' ')[1]))))
-        mask = Image.fromarray(np.array(Image.open(os.path.join('/kaggle/input/cityscapes/gtFine_trainvaltest', id.split(' ')[1]))))
+        #mask = Image.fromarray(np.array(Image.open(os.path.join('/kaggle/input/cityscapes/gtFine_trainvaltest', id.split(' ')[1]))))
 
         if self.mode == 'val':
             img, mask = normalize(img, mask)

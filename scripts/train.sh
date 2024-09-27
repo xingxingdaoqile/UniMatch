@@ -36,7 +36,7 @@ python -m torch.distributed.launch \
     --master_port=$2 \
     /kaggle/working/UniMatch/$method.py \
     --config=$config --labeled-id-path $labeled_id_path --unlabeled-id-path $unlabeled_id_path \
-    --save-path $save_path --port $2 2>&1 | tee $save_path/$now.log
+    --save-path $save_path --port $2 2>&1 | tee $save_path/log_$now.log
 
  #--nproc_per_node=$1：指定每个节点的进程数，由脚本的第一个参数 $1 决定（例如 GPU 数量）。
  #--master_addr=localhost：设置主节点的地址为 localhost（即本地机器）。

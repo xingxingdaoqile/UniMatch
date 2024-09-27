@@ -35,7 +35,7 @@ class SemiDataset(Dataset):
         #img = Image.open(os.path.join(self.root, id.split(' ')[0])).convert('RGB')
         img = Image.open(os.path.join('/kaggle/input/cityscapes/leftImg8bit_trainvaltest', id.split(' ')[0])).convert('RGB')
 
-        retries = 3  # 设置重试次数
+        retries = 5  # 增加重试次数
         for _ in range(retries):
             try:
                 mask_path = os.path.join('/kaggle/input/cityscapes/gtFine_trainvaltest', id.split(' ')[1])
@@ -43,7 +43,7 @@ class SemiDataset(Dataset):
                 return mask
             except FileNotFoundError:
                 print(f"File {mask_path} not found, retrying...")
-                time.sleep(0.5)  # 等待 0.5 秒后重试
+                time.sleep(1)  # 增加等待时间至 1 秒
         raise FileNotFoundError(f"File {mask_path} not found after {retries} retries")
         #mask = Image.fromarray(np.array(Image.open(os.path.join(self.root, id.split(' ')[1]))))
         #mask = Image.fromarray(np.array(Image.open(os.path.join('/kaggle/input/cityscapes/gtFine_trainvaltest', id.split(' ')[1]))))

@@ -18,7 +18,7 @@ from util.classes import CLASSES
 from util.ohem import ProbOhemCrossEntropy2d
 from util.utils import count_params, init_log, AverageMeter
 from util.dist_helper import setup_distributed
-
+import os
 
 parser = argparse.ArgumentParser(description='Revisiting Weak-to-Strong Consistency in Semi-Supervised Semantic Segmentation')
 parser.add_argument('--config', type=str, required=True)
@@ -30,6 +30,24 @@ parser.add_argument('--port', default=None, type=int)
 
 
 def main():
+    dataset_dir = '/kaggle/input/cityscapes/gtFine_trainvaltest/gtFine/train/'
+    missing_files = []
+
+    files_to_check = [
+        "bochum/bochum_000000_027951_gtFine_labelTrainIds.png",
+        "stuttgart/stuttgart_000055_000019_gtFine_labelTrainIds.png",
+        # 添加其他需要检查的文件
+    ]
+
+    for file_path in files_to_check:
+        full_path = os.path.join(dataset_dir, file_path)
+        if not os.path.exists(full_path):
+            missing_files.append(full_path)
+
+    if missing_files:
+        print(f"Missing files: {missing_files}")
+    else:
+        print("All files are present.")
     args = parser.parse_args()
 
     cfg = yaml.load(open(args.config, "r"), Loader=yaml.Loader)#加载配置文件的内容，并转换为字典格式供后续使用

@@ -102,12 +102,12 @@ def main():
 
     trainsampler_l = torch.utils.data.distributed.DistributedSampler(trainset_l)#创建数据采样器 DistributedSampler，用于分布式训练环境，确保不同进程能够加载不同的数据切片。
     trainloader_l = DataLoader(trainset_l, batch_size=cfg['batch_size'],
-                               pin_memory=True, num_workers=0, drop_last=True, sampler=trainsampler_l)#DataLoader 用于将数据集打包为批次，并分发到 GPU 进行训练和验证
+                               pin_memory=True, num_workers=1, drop_last=True, sampler=trainsampler_l)#DataLoader 用于将数据集打包为批次，并分发到 GPU 进行训练和验证
     trainsampler_u = torch.utils.data.distributed.DistributedSampler(trainset_u)
     trainloader_u = DataLoader(trainset_u, batch_size=cfg['batch_size'],
-                               pin_memory=True, num_workers=0, drop_last=True, sampler=trainsampler_u)
+                               pin_memory=True, num_workers=1, drop_last=True, sampler=trainsampler_u)
     valsampler = torch.utils.data.distributed.DistributedSampler(valset)
-    valloader = DataLoader(valset, batch_size=1, pin_memory=True, num_workers=0,
+    valloader = DataLoader(valset, batch_size=1, pin_memory=True, num_workers=1,
                            drop_last=False, sampler=valsampler)#num_workers之前是1
 
     total_iters = len(trainloader_u) * cfg['epochs']

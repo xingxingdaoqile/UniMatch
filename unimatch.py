@@ -98,8 +98,8 @@ def main():
     
     if os.path.exists(os.path.join(args.save_path, 'latest.pth')):
         checkpoint = torch.load(os.path.join(args.save_path, 'latest.pth'))
-        model.load_state_dict(checkpoint['model'])
-        optimizer.load_state_dict(checkpoint['optimizer'])
+        model.load_state_dict(checkpoint['model'])#从检查点中加载模型的权重
+        optimizer.load_state_dict(checkpoint['optimizer'])#从检查点中恢复优化器的状态（比如学习率和动量）
         epoch = checkpoint['epoch']
         previous_best = checkpoint['previous_best']
         
@@ -110,16 +110,17 @@ def main():
         if rank == 0:
             logger.info('===========> Epoch: {:}, LR: {:.5f}, Previous best: {:.2f}'.format(
                 epoch, optimizer.param_groups[0]['lr'], previous_best))
-
-        total_loss = AverageMeter()
-        total_loss_x = AverageMeter()
-        total_loss_s = AverageMeter()
-        total_loss_w_fp = AverageMeter()
-        total_mask_ratio = AverageMeter()
-
+        #AverageMeter 是一种工具，用于统计每个损失函数的平均值
+        total_loss = AverageMeter()#总损失（监督和无监督部分的加权和）
+        total_loss_x = AverageMeter()#监督数据（标注数据）损失
+        total_loss_s = AverageMeter()#无监督数据强增强的损失
+        total_loss_w_fp = AverageMeter()#无监督数据的预测损失
+        total_mask_ratio = AverageMeter()#无监督数据中，预测置信度大于阈值的数据比率
+        #设置数据加载器的采样器，以确保在分布式训练中每个 epoch 的数据是正确分布的
         trainloader_l.sampler.set_epoch(epoch)
         trainloader_u.sampler.set_epoch(epoch)
 
+        #使用 zip 函数将有监督数据（trainloader_l）和无监督数据（trainloader_u）进行打包，方便后续批次操作。无监督数据被使用两次，分别用于生成强增强和弱增强的样本
         loader = zip(trainloader_l, trainloader_u, trainloader_u)
 
         for i, ((img_x, mask_x),

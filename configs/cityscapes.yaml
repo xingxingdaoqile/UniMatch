@@ -6,7 +6,7 @@ data_root: /kaggle/input/cityscapes
 
 # arguments for training
 epochs: 240
-batch_size: 4 # per GPU x 4 GPUs，之前是2
+batch_size: 2 # per GPU x 4 GPUs，之前是2
 lr: 0.005
 lr_multi: 1.0
 criterion:

@@ -32,8 +32,8 @@ class SemiDataset(Dataset):
 
     def __getitem__(self, item):
         id = self.ids[item]
-        img = Image.open(os.path.join(self.root, id.split(' ')[0])).convert('RGB')
-        #img = Image.open(os.path.join('/kaggle/input/cityscapes/leftImg8bit', id.split(' ')[0])).convert('RGB')
+        #img = Image.open(os.path.join(self.root, id.split(' ')[0])).convert('RGB')
+        img = Image.open(os.path.join('/kaggle/input/cityscapes/leftImg8bit', id.split(' ')[0])).convert('RGB')
 
         mask = Image.fromarray(np.array(Image.open(os.path.join(self.root, id.split(' ')[1]))))
         #mask = Image.fromarray(np.array(Image.open(os.path.join('/kaggle/input/cityscapes/gtFine', id.split(' ')[1]))))

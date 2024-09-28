@@ -141,10 +141,11 @@ def main():
         #使用 zip 函数将有监督数据（trainloader_l）和无监督数据（trainloader_u）进行打包，方便后续批次操作。无监督数据被使用两次，分别用于生成强增强和弱增强的样本
         loader = zip(trainloader_l, trainloader_u, trainloader_u)
 
+        #将监督数据 img_x 和 mask_x 以及无监督数据（原始图片 img_u_w，增强后的图片 img_u_s1 和 img_u_s2，以及遮掩和 CutMix 的参数）传递到 GPU 上
         for i, ((img_x, mask_x),
                 (img_u_w, img_u_s1, img_u_s2, ignore_mask, cutmix_box1, cutmix_box2),
                 (img_u_w_mix, img_u_s1_mix, img_u_s2_mix, ignore_mask_mix, _, _)) in enumerate(loader):
-            
+            #其中 cutmix_box1 和 cutmix_box2 是 CutMix 算法中用来进行数据混合的盒子坐标，用于对无监督数据的增强处理
             img_x, mask_x = img_x.cuda(), mask_x.cuda()
             img_u_w = img_u_w.cuda()
             img_u_s1, img_u_s2, ignore_mask = img_u_s1.cuda(), img_u_s2.cuda(), ignore_mask.cuda()
@@ -153,6 +154,7 @@ def main():
             img_u_s1_mix, img_u_s2_mix = img_u_s1_mix.cuda(), img_u_s2_mix.cuda()
             ignore_mask_mix = ignore_mask_mix.cuda()
 
+            #在评估模式下（torch.no_grad() 和 model.eval()），模型对无监督的混合增强图片进行推理，计算出预测的类别 mask_u_w_mix 和置信度 conf_u_w_mix
             with torch.no_grad():
                 model.eval()
 
@@ -160,6 +162,7 @@ def main():
                 conf_u_w_mix = pred_u_w_mix.softmax(dim=1).max(dim=1)[0]
                 mask_u_w_mix = pred_u_w_mix.argmax(dim=1)
 
+            #使用 CutMix 算法对增强的无监督数据进行混合。cutmix_box1 和 cutmix_box2 是用于控制混合的区域，img_u_s1 和 img_u_s2 分别对应强增强的无监督图片
             img_u_s1[cutmix_box1.unsqueeze(1).expand(img_u_s1.shape) == 1] = \
                 img_u_s1_mix[cutmix_box1.unsqueeze(1).expand(img_u_s1.shape) == 1]
             img_u_s2[cutmix_box2.unsqueeze(1).expand(img_u_s2.shape) == 1] = \
@@ -168,7 +171,7 @@ def main():
             model.train()
 
             num_lb, num_ulb = img_x.shape[0], img_u_w.shape[0]
-
+            #进入训练模式，模型接受有监督数据和无监督数据的输入，预测 preds 和 preds_fp。其中 pred_x 是有监督数据的预测结果，pred_u_w 是无监督数据的预测结果，而 pred_u_w_fp 是无监督数据的弱增强预测结果
             preds, preds_fp = model(torch.cat((img_x, img_u_w)), True)
             pred_x, pred_u_w = preds.split([num_lb, num_ulb])
             pred_u_w_fp = preds_fp[num_lb:]
@@ -192,6 +195,7 @@ def main():
             conf_u_w_cutmixed2[cutmix_box2 == 1] = conf_u_w_mix[cutmix_box2 == 1]
             ignore_mask_cutmixed2[cutmix_box2 == 1] = ignore_mask_mix[cutmix_box2 == 1]
 
+            #loss_x 是有监督数据的损失，通过有标签数据 mask_x 和预测结果 pred_x 计算
             loss_x = criterion_l(pred_x, mask_x)
 
             loss_u_s1 = criterion_u(pred_u_s1, mask_u_w_cutmixed1)
@@ -212,7 +216,7 @@ def main():
 
             optimizer.zero_grad()
             loss.backward()
-            optimizer.step()
+            optimizer.step()#优化器更新模型的参数。通过 optimizer.step() 执行一步优化
 
             total_loss.update(loss.item())
             total_loss_x.update(loss_x.item())
@@ -229,7 +233,7 @@ def main():
             optimizer.param_groups[1]["lr"] = lr * cfg['lr_multi']
             
             if rank == 0:
-                writer.add_scalar('train/loss_all', loss.item(), iters)
+                writer.add_scalar('train/loss_all', loss.item(), iters)#记录训练过程中不同类型的损失值（总损失、监督损失、无监督损失）等
                 writer.add_scalar('train/loss_x', loss_x.item(), iters)
                 writer.add_scalar('train/loss_s', (loss_u_s1.item() + loss_u_s2.item()) / 2.0, iters)
                 writer.add_scalar('train/loss_w_fp', loss_u_w_fp.item(), iters)
@@ -241,7 +245,7 @@ def main():
                                             total_loss_w_fp.avg, total_mask_ratio.avg))
 
         eval_mode = 'sliding_window' if cfg['dataset'] == 'cityscapes' else 'original'
-        mIoU, iou_class = evaluate(model, valloader, eval_mode, cfg)
+        mIoU, iou_class = evaluate(model, valloader, eval_mode, cfg)#在验证集上评估模型，返回平均交并比（mIoU）和每个类别的 IoU 值
 
         if rank == 0:
             for (cls_idx, iou) in enumerate(iou_class):

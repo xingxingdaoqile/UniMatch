@@ -33,12 +33,12 @@ class SemiDataset(Dataset):
     def __getitem__(self, item):
         id = self.ids[item]
         #img = Image.open(os.path.join(self.root, id.split(' ')[0])).convert('RGB')
-        img = Image.open(os.path.join('/kaggle/input/cityscapes/leftImg8bit_trainvaltest', id.split(' ')[0])).convert('RGB')
+        img = Image.open(os.path.join('/kaggle/input/cityscapes/leftImg8bit', id.split(' ')[0])).convert('RGB')
 
         retries = 5  # 增加重试次数
         for _ in range(retries):
             try:
-                mask_path = os.path.join('/kaggle/input/cityscapes/gtFine_trainvaltest', id.split(' ')[1])
+                mask_path = os.path.join('/kaggle/input/cityscapes/gtFine', id.split(' ')[1])
                 mask = Image.open(mask_path)
                 return mask
             except FileNotFoundError:
